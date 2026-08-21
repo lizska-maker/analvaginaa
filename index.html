@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Аналитика · Дашборд</title>
+<!-- Библиотеки для чтения Excel и CSV -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+:root{
+  --theme-bg:#fdf2f7;--theme-light:#fce4ec;--theme-mid:#f8bbd0;--theme-accent:#e91e8c;
+  --theme-soft:#f48fb1;--theme-btn-g1:#ec407a;--theme-btn-g2:#f06292;--theme-btn-text:#fff;
+  --theme-surface-tint:#fff6fa;--theme-border:rgba(236,64,122,.16);--theme-border-soft:rgba(236,64,122,.08);
+  --theme-text-main:#3d1a29;--theme-text-sec:#9e6070;
+  --theme-glow:rgba(236,64,122,.30);--theme-blob1:rgba(244,143,177,.32);--theme-blob2:rgba(248,187,208,.24);
+  --surface:#fff;--text-tertiary:#c9a0ae;--green:#3fae74;--green-light:#e6f6ed;--red:#e5484d;--red-light:#fdecec;
+  --radius-sm:12px;--radius-md:16px;--radius-lg:22px;--radius-xl:28px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.06);
+  --shadow-md:0 8px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.04);
+  --shadow-lg:0 18px 50px rgba(0,0,0,.12);
+  --shadow-glow:0 8px 24px rgba(0,0,0,.12);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+}
+body.theme-sun{--theme-bg:#fdf7ee;--theme-light:#f6e7d2;--theme-mid:#ecd4b4;--theme-accent:#c96f18;--theme-soft:#e69a3c;--theme-btn-g1:#e08a26;--theme-btn-g2:#f4ad50;--theme-surface-tint:#fdf9f2;--theme-border:rgba(201,111,24,.20);--theme-border-soft:rgba(201,111,24,.08);--theme-text-main:#3a2412;--theme-text-sec:#946a44;--theme-glow:rgba(224,138,38,.30);--theme-blob1:rgba(244,173,80,.30);--theme-blob2:rgba(236,212,180,.24);}
+body.theme-sky{--theme-bg:#eef8ff;--theme-light:#e1f3fe;--theme-mid:#b6e3fb;--theme-accent:#0277bd;--theme-soft:#37b6f0;--theme-btn-g1:#039be5;--theme-btn-g2:#54c5f7;--theme-surface-tint:#f5fbff;--theme-border:rgba(2,119,189,.18);--theme-border-soft:rgba(2,119,189,.08);--theme-text-main:#102a43;--theme-text-sec:#4d6c89;--theme-glow:rgba(3,155,229,.30);--theme-blob1:rgba(84,197,247,.28);--theme-blob2:rgba(182,227,251,.24);}
+body.theme-mint{--theme-bg:#edfaf2;--theme-light:#d6f0e1;--theme-mid:#aae7cf;--theme-accent:#1e824c;--theme-soft:#34c878;--theme-btn-g1:#27ae60;--theme-btn-g2:#5dd98f;--theme-surface-tint:#f3fcf7;--theme-border:rgba(30,130,76,.20);--theme-border-soft:rgba(30,130,76,.08);--theme-text-main:#143622;--theme-text-sec:#417556;--theme-glow:rgba(39,174,96,.30);--theme-blob1:rgba(93,217,143,.28);--theme-blob2:rgba(170,231,207,.24);}
+body.theme-lilac{--theme-bg:#f5f1fb;--theme-light:#ece0f5;--theme-mid:#d3c0ea;--theme-accent:#8e44ad;--theme-soft:#a569c4;--theme-btn-g1:#9b59b6;--theme-btn-g2:#c194d8;--theme-surface-tint:#faf7fd;--theme-border:rgba(142,68,173,.20);--theme-border-soft:rgba(142,68,173,.08);--theme-text-main:#331e38;--theme-text-sec:#6f5180;--theme-glow:rgba(155,89,182,.30);--theme-blob1:rgba(193,148,216,.28);--theme-blob2:rgba(211,192,234,.24);}
+body.theme-slate{--theme-bg:#eef1f6;--theme-light:#e3e8ef;--theme-mid:#cfd8e3;--theme-accent:#34495e;--theme-soft:#5d6d7e;--theme-btn-g1:#48586a;--theme-btn-g2:#6f8093;--theme-surface-tint:#f6f8fb;--theme-border:rgba(52,73,94,.18);--theme-border-soft:rgba(52,73,94,.08);--theme-text-main:#1f2d3d;--theme-text-sec:#5a6b7b;--theme-glow:rgba(72,88,106,.28);--theme-blob1:rgba(111,128,147,.24);--theme-blob2:rgba(207,216,227,.24);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--theme-bg);min-height:100vh;color:var(--theme-text-main);-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;transition:background-color .45s ease,color .45s ease;position:relative;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;background:radial-gradient(46vw 46vw at 12% 8%,var(--theme-blob1),transparent 60%),radial-gradient(40vw 40vw at 92% 22%,var(--theme-blob2),transparent 62%),radial-gradient(50vw 50vw at 78% 92%,var(--theme-blob1),transparent 60%);animation:drift 26s ease-in-out infinite alternate;transition:background .45s ease;}
+@keyframes drift{0%{transform:scale(1) translate(0,0);}100%{transform:scale(1.1) translate(-2%,1.5%);}}
+.bg-decor{position:fixed;pointer-events:none;z-index:0;user-select:none;opacity:.5;filter:drop-shadow(0 6px 18px var(--theme-glow));animation:floaty 9s ease-in-out infinite;transition:opacity .45s;}
+.bg-decor::before{content:'🐾';}
+body.theme-sun .bg-decor::before{content:'☀️';}body.theme-sky .bg-decor::before{content:'☁️';}
+body.theme-mint .bg-decor::before{content:'🍀';}body.theme-lilac .bg-decor::before{content:'🦋';}
+body.theme-slate .bg-decor::before{content:'⚙️';}
+.decor-1{top:6%;left:1%;font-size:84px;animation-delay:0s;}
+.decor-2{top:24%;right:2%;font-size:60px;animation-delay:-2s;}
+.decor-3{bottom:24%;left:3%;font-size:54px;animation-delay:-4s;}
+.decor-4{bottom:7%;right:3%;font-size:92px;animation-delay:-6s;}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-6deg);}50%{transform:translateY(-40px) rotate(6deg);}}
+.header{background:rgba(255,255,255,.62);backdrop-filter:saturate(190%) blur(22px);-webkit-backdrop-filter:saturate(190%) blur(22px);border-bottom:1px solid var(--theme-border);padding:0 22px;height:64px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:200;box-shadow:0 4px 24px rgba(0,0,0,.04);transition:border-color .45s,background .45s;}
+.header-left{display:flex;align-items:center;flex-shrink:0;cursor:pointer;padding:6px 12px;border-radius:12px;transition:background 0.2s;}
+.header-left:hover{background:rgba(255,255,255,0.6);}
+.header-icon::before{content:'🐾';font-size:21px;margin-right:9px;filter:drop-shadow(0 2px 6px var(--theme-glow));}
+body.theme-sun .header-icon::before{content:'☀️';}body.theme-sky .header-icon::before{content:'☁️';}
+body.theme-mint .header-icon::before{content:'🍀';}body.theme-lilac .header-icon::before{content:'🦋';}
+body.theme-slate .header-icon::before{content:'⚙️';}
+.header-title{font-size:18px;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--theme-accent),var(--theme-soft));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.header-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:0 1 auto;min-width:0;padding:5px;border-radius:99px;background:rgba(255,255,255,.55);border:1px solid var(--theme-border);box-shadow:inset 0 1px 3px rgba(0,0,0,.05),var(--shadow-sm);backdrop-filter:blur(10px);}
+.header-tabs::-webkit-scrollbar{display:none;}
+.tab-btn{background:transparent;border:none;color:var(--text-tertiary);font-family:var(--font);font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer;transition:all .22s cubic-bezier(0.2, 0.7, 0.3, 1);white-space:nowrap;}
+.tab-btn:hover:not(.active){color:var(--theme-text-main);background:rgba(255,255,255,.75);}
+.tab-btn.active{color:var(--theme-btn-text);background:linear-gradient(135deg,var(--theme-btn-g1),var(--theme-btn-g2));box-shadow:var(--shadow-glow),0 1px 2px rgba(0,0,0,.10);transform:translateY(-1px);}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;animation:fadeIn 0.4s ease forwards;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.main{max-width:1380px;margin:0 auto;padding:26px 26px 72px;position:relative;z-index:1;}
+.tab-hero{display:flex;align-items:center;gap:16px;margin:2px 0 26px;position:sticky;top:66px;z-index:60;padding:6px 8px;border-radius:16px;transition:padding .25s,background .25s,box-shadow .25s;}
+.tab-hero.is-stuck{background:linear-gradient(180deg,var(--theme-bg) 72%,transparent);backdrop-filter:blur(6px);box-shadow:0 10px 22px -14px rgba(0,0,0,0.1);}
+.hero-badge{width:58px;height:58px;flex-shrink:0;border-radius:18px;background:linear-gradient(135deg,var(--theme-btn-g1),var(--theme-btn-g2));box-shadow:var(--shadow-glow);display:flex;align-items:center;justify-content:center;font-size:29px;line-height:1;transition:transform .25s ease;}
+.tab-hero.is-stuck .hero-badge{transform:scale(0.8);}
+.hero-text{min-width:0;}
+.hero-title{font-size:clamp(26px,3.4vw,40px);font-weight:900;letter-spacing:-0.035em;line-height:1.05;background:linear-gradient(120deg,var(--theme-accent),var(--theme-soft));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;transition:font-size .25s ease;}
+.tab-hero.is-stuck .hero-title{font-size:clamp(20px,2.4vw,28px);}
+.hero-sub{font-size:14px;color:var(--theme-text-sec);margin-top:5px;line-height:1.45;max-width:62ch;}
+.upload-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);border:1px solid var(--theme-border);overflow:hidden;margin-bottom:16px;transition:transform .25s,box-shadow .25s,border-color .45s;}
+.upload-card:hover{box-shadow:var(--shadow-lg);}
+.upload-zone{padding:18px 24px;display:flex;align-items:center;gap:16px;border:2px dashed transparent;border-radius:var(--radius-lg);cursor:pointer;transition:all .25s;position:relative;}
+.upload-zone:hover{border-color:var(--theme-soft);background:var(--theme-light);}
+.upload-zone.compact{padding:15px 18px;}
+.upload-icon{width:46px;height:46px;flex-shrink:0;background:linear-gradient(135deg,var(--theme-light),var(--theme-surface-tint));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;}
+.upload-text{flex:1;min-width:0;}
+.upload-label{font-size:14px;font-weight:700;margin-bottom:3px;letter-spacing:-0.01em;}
+.upload-sub{font-size:12px;color:var(--theme-text-sec);}
+.upload-btn{background:linear-gradient(135deg,var(--theme-btn-g1),var(--theme-btn-g2));color:var(--theme-btn-text);font-size:13px;font-weight:700;padding:9px 20px;border-radius:980px;white-space:nowrap;box-shadow:var(--shadow-glow);transition:transform .2s,filter .2s;}
+.upload-zone:hover .upload-btn{transform:translateY(-1px);filter:brightness(1.05);}
+.file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.file-loaded{display:flex;align-items:center;gap:10px;padding:10px 20px;background:linear-gradient(90deg,var(--theme-light),var(--theme-surface-tint));border-top:1px solid var(--theme-border);font-size:13px;font-weight:600;color:#2e7d52;}
+.file-loaded-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 0 4px var(--green-light);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--green-light);}50%{box-shadow:0 0 0 7px transparent;}}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px;}
+.upload-grid .upload-card{margin-bottom:0;}
+
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.toolbar-label{font-size:13px;font-weight:700;color:var(--theme-text-sec);}
+.sheet-select{appearance:none;background:var(--surface);border:1px solid var(--theme-border);border-radius:var(--radius-sm);padding:9px 32px 9px 14px;font-size:14px;font-weight:600;color:var(--theme-text-main);font-family:var(--font);box-shadow:var(--shadow-sm);cursor:pointer;outline:none;}
+.filter-panel{background:var(--surface);border:1px solid var(--theme-border);border-radius:var(--radius-md);padding:18px 22px;margin-bottom:16px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px;}
+.filter-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;font-weight:600;}
+.filter-controls input[type=datetime-local],.text-input{border:1px solid var(--theme-border);border-radius:10px;padding:7px 11px;font-family:var(--font);font-size:13px;outline:none;font-weight:600;color:var(--theme-text-main);background:var(--theme-surface-tint);}
+.filter-controls input[type=datetime-local]:focus,.text-input:focus{border-color:var(--theme-soft);box-shadow:0 0 0 4px var(--theme-border);background:#fff;}
+.btn-calc{background:linear-gradient(135deg,var(--theme-btn-g1),var(--theme-btn-g2));color:var(--theme-btn-text);border:none;border-radius:11px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:var(--shadow-glow);transition:transform .15s,filter .15s; display:inline-flex; align-items:center; gap:8px;}
+.btn-calc:hover{transform:translateY(-1px);filter:brightness(1.06);}
+.accent{color:var(--theme-accent);font-weight:800;}
+.log-text{font-size:11px;color:var(--theme-text-sec);font-family:ui-monospace,'SF Mono',Menlo,monospace;}
+.tags-input{width:100%;border:1px solid var(--theme-border);border-radius:12px;padding:10px 14px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;outline:none;resize:vertical;color:var(--theme-text-main);background:var(--theme-surface-tint);}
+.checkbox-label{font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--theme-text-main);}
+.checkbox-label input{accent-color:var(--theme-accent);width:16px;height:16px;}
+.export-main-btn{display:inline-flex;align-items:center;gap:7px;background:var(--surface);color:var(--theme-accent);font-size:13px;font-weight:700;padding:9px 20px;border-radius:980px;border:1.5px solid var(--theme-mid);cursor:pointer;font-family:var(--font);box-shadow:var(--shadow-sm);transition:all .2s;}
+.export-main-btn:hover{background:var(--theme-light);border-color:var(--theme-soft);transform:translateY(-1px);}
+
+.loading{text-align:center;font-weight:800;padding:22px;font-size:15px;background:linear-gradient(90deg,var(--theme-accent),var(--theme-soft),var(--theme-accent));background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;}
+@keyframes shine{to{background-position:200% center;}}
+
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--theme-border-soft);padding:18px 20px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--theme-btn-g1),var(--theme-soft));}
+.stat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+.stat-label{font-size:11px;font-weight:700;color:var(--theme-text-sec);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;}
+.stat-value{font-size:27px;font-weight:900;letter-spacing:-0.03em;}
+.stat-value.highlight{background:linear-gradient(135deg,var(--theme-accent),var(--theme-soft));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-value.green{color:var(--green);}
+
+.table-card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);border:1px solid var(--theme-border);overflow:hidden;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;}
+thead th{position:sticky;top:0;z-index:2;background:linear-gradient(135deg,var(--theme-light),var(--theme-surface-tint));backdrop-filter:blur(8px);padding:12px 15px;text-align:left;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--theme-btn-g1);border-bottom:1px solid var(--theme-border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--theme-border-soft);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--theme-surface-tint);}
+tbody td{padding:12px 15px;font-size:13px;vertical-align:middle;white-space:nowrap;}
+.group-row td{background:linear-gradient(90deg,var(--theme-light),var(--theme-surface-tint))!important;color:var(--theme-btn-g1);font-size:11px;font-weight:800;letter-spacing:0.7px;text-transform:uppercase;padding:9px 17px;}
+.cell-name{font-weight:700;}
+.cell-nick{font-size:12px;color:var(--theme-text-sec);font-family:ui-monospace,monospace;}
+.cell-hours{font-size:14px;font-weight:900;}
+.cell-schedule{display:inline-flex;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:800;}
+.type-22{background:#f3e5f5;color:#8e24aa;}
+.type-52{background:#fce4ec;color:#c2185b;}
+.type-nenorm{background:#fff3e0;color:#e65100;}
+.badge{display:inline-flex;align-items:center;gap:3px;border-radius:8px;padding:3px 9px;font-size:11px;font-weight:700;margin:2px 2px 2px 0;}
+.badge-sick{background:#f0f0f0;color:#5c5c5e;}
+.badge-vacation{background:var(--green-light);color:#2e7d52;}
+.badge-absent{background:#fce4ec;color:#c2185b;}
+.badge-neca{background:var(--theme-light);color:var(--theme-accent);font-weight:800;}
+.badge-other{background:#eceff1;color:#546e7a;}
+
+.analytics-table-wrap table th, .analytics-table-wrap table td{text-align:center;border:1px solid var(--theme-border-soft);}
+.analytics-table-wrap table td:first-child{text-align:left;font-weight:700;}
+.bg-green{background-color:#d6f3df!important;color:#157a3c!important;font-weight:800;}
+.bg-yellow{background-color:#fdf0c4!important;color:#946300!important;font-weight:800;}
+.bg-red{background-color:#fbd9da!important;color:#b42318!important;font-weight:800;}
+.group-header{background-color:var(--theme-light)!important;color:var(--theme-accent);font-weight:900;text-align:left!important;font-size:14px;}
+.group-total{background-color:var(--theme-surface-tint);font-weight:800;}
+.grand-total{background:linear-gradient(90deg,var(--theme-mid),var(--theme-light))!important;font-weight:900;font-size:14px;}
+.zero-val{color:#c2c7cc;}
+
+.settings-intro{background:var(--surface);border:1px solid var(--theme-border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:18px;box-shadow:var(--shadow-sm);}
+.settings-intro h2{font-size:24px;font-weight:900;letter-spacing:-0.03em;margin-bottom:8px;}
+.settings-intro p{font-size:14px;color:var(--theme-text-sec);line-height:1.6;}
+.settings-block{background:var(--surface);border:1px solid var(--theme-border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:18px;box-shadow:var(--shadow-sm);}
+.settings-block-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
+.settings-block-head h3{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
+.settings-hint{font-size:12px;color:var(--theme-text-sec);margin-bottom:16px;}
+.thresholds-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;}
+.threshold-card{border:1px solid var(--theme-border-soft);border-radius:var(--radius-md);padding:16px 18px;background:var(--theme-surface-tint);transition:border-color 0.2s,transform 0.2s;}
+.threshold-card:hover{border-color:var(--theme-soft);transform:translateY(-2px);}
+.threshold-card .t-title{font-size:13px;font-weight:800;margin-bottom:12px;}
+.threshold-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:12px;font-weight:700;}
+.threshold-row .dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--green);box-shadow:0 0 0 3px var(--green-light);}
+.dot-yellow{background:#f2aa4c;box-shadow:0 0 0 3px #fdf0c4;}
+.threshold-row input{width:82px;border:1px solid var(--theme-border);border-radius:9px;padding:6px 9px;font-size:13px;font-family:var(--font);font-weight:700;outline:none;background:#fff;}
+
+.add-team-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.add-team-form .text-input{flex:1;min-width:180px;}
+.team-admin-card{border:1px solid var(--theme-border);border-radius:var(--radius-md);margin-bottom:16px;overflow:hidden;transition:box-shadow 0.2s;}
+.team-admin-card:hover{box-shadow:var(--shadow-sm);}
+.team-admin-head{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(135deg,var(--theme-light),var(--theme-surface-tint));flex-wrap:wrap;}
+.team-admin-head .team-name-input{flex:1;min-width:160px;font-weight:800;}
+.team-admin-head .team-count{font-size:12px;color:var(--theme-text-sec);font-weight:700;}
+.team-admin-body{padding:16px 18px;}
+.emp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.emp-chip{display:inline-flex;align-items:center;gap:7px;background:var(--theme-surface-tint);border:1px solid var(--theme-border-soft);border-radius:980px;padding:6px 8px 6px 13px;font-size:13px;font-weight:600;transition:border-color 0.2s;}
+.emp-chip:hover{border-color:var(--theme-soft);}
+.emp-chip button{border:none;background:var(--red-light);color:var(--red);width:21px;height:21px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;font-weight:800;transition:background 0.2s,transform 0.15s;}
+.emp-chip button:hover{background:var(--red);color:#fff;transform:scale(1.1);}
+.add-emp-form{display:flex;gap:8px;flex-wrap:wrap;}
+.add-emp-form .text-input{flex:1;min-width:160px;}
+.btn-danger{background:var(--red-light);color:var(--red);border:none;border-radius:10px;padding:9px 15px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);transition:background 0.2s,color 0.2s;}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.empty-note{font-size:13px;color:var(--text-tertiary);font-style:italic;}
+
+.btn-save-html{background:linear-gradient(135deg,#3fae74,#2ecc71);color:#fff;border:none;padding:14px 28px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 6px 20px rgba(63,174,116,.35);transition:transform 0.2s,filter 0.2s;font-family:var(--font);}
+.btn-save-html:hover{transform:translateY(-2px);filter:brightness(1.1);}
+.btn-save-html:active{transform:translateY(0);}
+
+/* Плавные анимации элементов */
+.fx-reveal {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+.fx-reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#toastStack {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+.toast {
+    pointer-events: auto;
+    min-width: 240px;
+    max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--theme-border);
+    border-left: 4px solid var(--green);
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow-lg);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theme-text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.4s;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.err { border-left-color: var(--red); }
+.toast .t-ico { font-size: 18px; }
+
+@media (max-width: 780px) {
+    .header { padding: 0 12px; gap: 10px; height: 60px; }
+    .header-title { font-size: 16px; }
+    .header-tabs { flex: 1 1 auto; }
+    .main { padding: 18px 12px 64px; }
+    .tab-btn { font-size: 12px; padding: 7px 12px; }
+    .bg-decor { opacity: 0.32; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+    .upload-zone { flex-wrap: wrap; }
+    .upload-btn { width: 100%; text-align: center; }
+    #toastStack { left: 12px; right: 12px; bottom: 12px; }
+    .toast { min-width: 0; max-width: none; }
+}
+</style>
+</head>
+<body>
+<script type="application/json" id="saved-app-state"></script>
+
+<div class="bg-decor decor-1"></div>
+<div class="bg-decor decor-2"></div>
+<div class="bg-decor decor-3"></div>
+<div class="bg-decor decor-4"></div>
+<div id="toastStack"></div>
+
+<header class="header">
+    <div class="header-left" onclick="switchTab('shifts')" title="На главную">
+        <span class="header-icon"></span>
+        <span class="header-title">Аналитика</span>
+    </div>
+    <nav class="header-tabs" id="tabsNav">
+        <button class="tab-btn active" data-tab="shifts">🗓️ Смены</button>
+        <button class="tab-btn" data-tab="deals">📞 Сделки</button>
+        <button class="tab-btn" data-tab="marketing">☁️ Маркетинг</button>
+        <button class="tab-btn" data-tab="attendance">🍀 Доходимость</button>
+        <button class="tab-btn" data-tab="mplTraffic">🦋 Трафик МПЛ</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Настройки</button>
+    </nav>
+</header>
+
+<main class="main">
+
+    <!-- ВКЛАДКА 1: СМЕНЫ -->
+    <section id="tab-shifts" class="tab-content active">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">🗓️</span>
+            <div class="hero-text">
+                <h1 class="hero-title">График смен</h1>
+                <p class="hero-sub">Загрузите расписание — получите сводку по часам, сменам и статусам.</p>
+            </div>
+        </div>
+        
+        <div class="upload-card fx-reveal">
+            <label class="upload-zone">
+                <input type="file" class="file-input" id="fileUploadShifts" accept=".xlsx,.xls,.csv">
+                <div class="upload-icon">📥</div>
+                <div class="upload-text">
+                    <div class="upload-label">Загрузите файл Excel с графиком смен</div>
+                    <div class="upload-sub">.xlsx, .xls или .csv</div>
+                </div>
+                <span class="upload-btn">Выбрать файл</span>
+            </label>
+            <div class="file-loaded" id="fileLoadedBarShifts" style="display:none">
+                <span class="file-loaded-dot"></span>
+                <span id="fileLoadedNameShifts"></span>
+            </div>
+        </div>
+        
+        <div class="toolbar fx-reveal" id="toolbarShifts" style="display:none">
+            <span class="toolbar-label">Лист:</span>
+            <select class="sheet-select" id="sheetSelectShifts"></select>
+            <button class="export-main-btn" id="exportShiftsBtn" style="margin-left:auto">📊 Экспорт Excel</button>
+        </div>
+        
+        <div class="stats-bar fx-reveal" id="statsBarShifts" style="display:none">
+            <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value highlight" id="statPeople">—</div></div>
+            <div class="stat-card"><div class="stat-label">Суммарно часов</div><div class="stat-value green" id="statHours">—</div></div>
+            <div class="stat-card"><div class="stat-label">Среднее часов</div><div class="stat-value" id="statAvg">—</div></div>
+            <div class="stat-card"><div class="stat-label">Больничных</div><div class="stat-value" id="statSick">—</div></div>
+        </div>
+        
+        <div class="table-card table-scroll fx-reveal" id="tableCardShifts" style="display:none">
+            <table>
+                <thead>
+                    <tr><th>Сотрудник</th><th>Ник</th><th>График</th><th>Факт смен</th><th>Итого часов</th><th>Статус</th></tr>
+                </thead>
+                <tbody id="tableBodyShifts"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 2: СДЕЛКИ -->
+    <section id="tab-deals" class="tab-content">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">📞</span>
+            <div class="hero-text">
+                <h1 class="hero-title">Аналитика сделок</h1>
+                <p class="hero-sub">Суточная выгрузка сделок с разбором причин отказов и доли не ЦА.</p>
+            </div>
+        </div>
+        
+        <div class="upload-card fx-reveal">
+            <label class="upload-zone">
+                <input type="file" class="file-input" id="fileUploadDeals" accept=".xlsx,.xls,.csv">
+                <div class="upload-icon">📞</div>
+                <div class="upload-text">
+                    <div class="upload-label">Загрузите суточную выгрузку сделок МПЛ</div>
+                    <div class="upload-sub">.csv (Битрикс24/1С) или .xlsx</div>
+                </div>
+                <span class="upload-btn">Выбрать файл</span>
+            </label>
+            <div class="file-loaded" id="fileLoadedBarDeals" style="display:none">
+                <span class="file-loaded-dot"></span>
+                <span id="fileLoadedNameDeals"></span>
+            </div>
+        </div>
+        
+        <div class="filter-panel fx-reveal" id="dealsFilterPanel" style="display:none">
+            <div class="filter-controls">
+                <span class="accent">⏳ Суточный период:</span>
+                <span>с</span><input type="datetime-local" id="dtFromInput">
+                <span>по</span><input type="datetime-local" id="dtToInput">
+                <button class="btn-calc" id="dealsRecalcBtn">Пересчитать</button>
+            </div>
+            <div id="dealsLogText" class="log-text"></div>
+        </div>
+        
+        <div class="stats-bar fx-reveal" id="statsBarDeals" style="display:none">
+            <div class="stat-card"><div class="stat-label">Всего сделок</div><div class="stat-value" id="dTotal">0</div></div>
+            <div class="stat-card"><div class="stat-label">не ца</div><div class="stat-value highlight" id="dNeca">0</div></div>
+            <div class="stat-card"><div class="stat-label">мужчины</div><div class="stat-value" id="dMen">0</div></div>
+            <div class="stat-card"><div class="stat-label">не ца по возрасту</div><div class="stat-value" id="dAge">0</div></div>
+            <div class="stat-card"><div class="stat-label">Банкрот/просрочник</div><div class="stat-value" id="dBankrupt">0</div></div>
+            <div class="stat-card"><div class="stat-label">из СНГ</div><div class="stat-value" id="dCis">0</div></div>
+        </div>
+        
+        <div class="table-card table-scroll fx-reveal" id="tableCardDeals" style="display:none">
+            <table>
+                <thead>
+                    <tr><th>Причина закрытия МПЛ</th><th>Кол-во за сутки</th><th>Доля от созданных</th></tr>
+                </thead>
+                <tbody id="tableBodyDeals"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 3: МАРКЕТИНГ -->
+    <section id="tab-marketing" class="tab-content">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">☁️</span>
+            <div class="hero-text">
+                <h1 class="hero-title">Аналитика маркетинга</h1>
+                <p class="hero-sub">Воронка по рекламным UTM-меткам и качество пришедших лидов.</p>
+            </div>
+        </div>
+        
+        <div class="upload-card fx-reveal">
+            <label class="upload-zone">
+                <input type="file" class="file-input" id="fileUploadMarketing" accept=".xlsx,.xls,.csv">
+                <div class="upload-icon">☁️</div>
+                <div class="upload-text">
+                    <div class="upload-label">Загрузите сырую базу ОП</div>
+                    <div class="upload-sub">.csv (Битрикс24) или .xlsx</div>
+                </div>
+                <span class="upload-btn">Выбрать файл</span>
+            </label>
+            <div class="file-loaded" id="fileLoadedBarMarketing" style="display:none">
+                <span class="file-loaded-dot"></span>
+                <span id="fileLoadedNameMarketing"></span>
+            </div>
+        </div>
+        
+        <div class="filter-panel fx-reveal" id="marketingControls" style="display:none">
+            <div class="filter-controls">
+                <span class="accent">🎯 Колонка UTM:</span>
+                <select id="utmColumnSelect" class="sheet-select">
+                    <option value="UTM Term">UTM Term</option>
+                    <option value="UTM Content">UTM Content</option>
+                    <option value="Источник">Источник</option>
+                    <option value="UTM Source">UTM Source</option>
+                    <option value="Название сделки">Название сделки</option>
+                </select>
+                <button class="export-main-btn" id="exportMarketingBtn" style="margin-left:auto">📊 Скачать Excel</button>
+            </div>
+            <div>
+                <div class="log-text" style="margin-bottom:6px">Список проверяемых меток (каждая с новой строки):</div>
+                <textarea id="utmTagsInput" rows="4" class="tags-input" placeholder="Введите метки или воспользуйтесь кнопкой авто-сбора справа..."></textarea>
+            </div>
+            <div class="filter-controls" style="justify-content:flex-end; gap: 12px; margin-top: 8px;">
+                <span id="marketingLogText" class="log-text" style="margin-right:auto"></span>
+                <button class="export-main-btn" id="marketingAutoBtn" style="border-color:var(--theme-accent); color:var(--theme-accent);">🪄 Авто-сбор меток из файла</button>
+                <button class="btn-calc" id="marketingCalcBtn">Рассчитать воронку</button>
+            </div>
+        </div>
+        
+        <div class="table-card table-scroll fx-reveal" id="tableCardMarketing" style="display:none">
+            <table id="marketingTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2">UTM Метка</th>
+                        <th rowspan="2">Пришло</th>
+                        <th rowspan="2">Обраб.</th>
+                        <th rowspan="2">Назнач.</th>
+                        <th rowspan="2">CV Назнач</th>
+                        <th rowspan="2">Дошло</th>
+                        <th rowspan="2">CV Доход.</th>
+                        <th rowspan="2">ЗНР</th>
+                        <th rowspan="2">CV ЗНР</th>
+                        <th colspan="2">Мужчины</th>
+                        <th colspan="2">Не ЦА возр.</th>
+                        <th colspan="2">Банкрот</th>
+                        <th colspan="2">Из СНГ</th>
+                        <th colspan="2">Не остав.</th>
+                        <th colspan="2">Недозвон</th>
+                        <th colspan="2">Отказ платн.</th>
+                        <th colspan="2">Негатив</th>
+                        <th colspan="2">Возраж.отказ</th>
+                        <th colspan="2">Без обуч.</th>
+                        <th colspan="2">Дубль</th>
+                        <th colspan="2">По-русски</th>
+                        <th colspan="2">Ученица</th>
+                    </tr>
+                    <tr id="marketingSubHeader"></tr>
+                </thead>
+                <tbody id="tableBodyMarketing"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 4: ДОХОДИМОСТЬ -->
+    <section id="tab-attendance" class="tab-content">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">🍀</span>
+            <div class="hero-text">
+                <h1 class="hero-title">Доходимость ОП</h1>
+                <p class="hero-sub">Путь лида от назначения до оплаты в разрезе менеджеров.</p>
+            </div>
+        </div>
+        
+        <div class="upload-grid fx-reveal">
+            <div class="upload-card">
+                <label class="upload-zone compact">
+                    <input type="file" class="file-input" id="fileLeads" accept=".csv,.xlsx,.xls">
+                    <div class="upload-icon">👥</div>
+                    <div class="upload-text">
+                        <div class="upload-label">1. Всего лидов</div>
+                        <div class="upload-sub">Кол: 1line Первый звонок кто</div>
+                    </div>
+                </label>
+                <div class="file-loaded" id="flBarLeads" style="display:none">
+                    <span class="file-loaded-dot"></span><span id="flNameLeads"></span>
+                </div>
+            </div>
+            
+            <div class="upload-card">
+                <label class="upload-zone compact">
+                    <input type="file" class="file-input" id="fileAppt" accept=".csv,.xlsx,.xls">
+                    <div class="upload-icon">📅</div>
+                    <div class="upload-text">
+                        <div class="upload-label">2. Назначения</div>
+                        <div class="upload-sub">Кол: 1line Кем передано в ОП</div>
+                    </div>
+                </label>
+                <div class="file-loaded" id="flBarAppt" style="display:none">
+                    <span class="file-loaded-dot"></span><span id="flNameAppt"></span>
+                </div>
+            </div>
+            
+            <div class="upload-card">
+                <label class="upload-zone compact">
+                    <input type="file" class="file-input" id="fileDia" accept=".csv,.xlsx,.xls">
+                    <div class="upload-icon">✅</div>
+                    <div class="upload-text">
+                        <div class="upload-label">3. Проведено ДИА</div>
+                        <div class="upload-sub">Оплаты из «Оплачено, руб»</div>
+                    </div>
+                </label>
+                <div class="file-loaded" id="flBarDia" style="display:none">
+                    <span class="file-loaded-dot"></span><span id="flNameDia"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-panel fx-reveal" style="flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <label class="checkbox-label">
+                <input type="checkbox" id="win1251Attendance" checked> CSV из Битрикс24 (Windows-1251)
+            </label>
+            <div class="filter-controls">
+                <button class="export-main-btn" id="exportAttendanceBtn">📊 Скачать Excel</button>
+                <button class="btn-calc" id="attendanceCalcBtn">Рассчитать доходимость 🍀</button>
+            </div>
+        </div>
+        
+        <div id="attendanceLoading" class="loading" style="display:none">⏳ Идет анализ файлов... 🍀</div>
+        <div class="table-card table-scroll analytics-table-wrap fx-reveal" id="attendanceTableCard" style="display:none">
+            <div id="attendanceTableContainer"></div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 5: ТРАФИК МПЛ -->
+    <section id="tab-mplTraffic" class="tab-content">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">🦋</span>
+            <div class="hero-text">
+                <h1 class="hero-title">Трафик по МПЛ</h1>
+                <p class="hero-sub">Авто-поиск меток и распределение трафика по командам.</p>
+            </div>
+        </div>
+        
+        <div class="upload-grid fx-reveal">
+            <div class="upload-card" style="grid-column: 1 / -1;">
+                <label class="upload-zone">
+                    <input type="file" class="file-input" id="fileTraffic" accept=".csv,.xlsx,.xls">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">
+                        <div class="upload-label">Загрузите базу сделок</div>
+                        <div class="upload-sub">Один общий файл для расчета (Взято в работу, Назначено, Дошедшие)</div>
+                    </div>
+                </label>
+                <div class="file-loaded" id="flBarTraffic" style="display:none">
+                    <span class="file-loaded-dot"></span><span id="flNameTraffic"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-panel fx-reveal" style="flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <div class="filter-controls">
+                <span class="accent">🎯 Колонка UTM:</span>
+                <select id="utmColumnSelectTraffic" class="sheet-select">
+                    <option value="UTM Term">UTM Term</option>
+                    <option value="UTM Content">UTM Content</option>
+                    <option value="Источник">Источник</option>
+                    <option value="UTM Source">UTM Source</option>
+                    <option value="Название сделки">Название сделки</option>
+                </select>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="win1251Traffic" checked> CSV (Windows-1251)
+                </label>
+            </div>
+            <div class="filter-controls">
+                <span id="trafficLogText" class="log-text" style="margin-right:auto"></span>
+                <button class="export-main-btn" id="exportTrafficBtn">📊 Скачать Excel</button>
+                <button class="btn-calc" id="trafficCalcBtn">Авто-поиск меток и расчет 🦋</button>
+            </div>
+        </div>
+        
+        <div id="trafficLoading" class="loading" style="display:none">⏳ Авто-анализ трафика МПЛ... 🦋</div>
+        <div id="trafficTableCard" class="fx-reveal" style="display:none">
+            <div id="trafficTableContainer"></div>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 6: НАСТРОЙКИ -->
+    <section id="tab-settings" class="tab-content">
+        <div class="tab-hero fx-reveal">
+            <span class="hero-badge">⚙️</span>
+            <div class="hero-text">
+                <h1 class="hero-title">Настройки дашборда</h1>
+                <p class="hero-sub">Управляйте командами, сотрудниками и порогами светофора.</p>
+            </div>
+        </div>
+        
+        <div class="settings-intro fx-reveal">
+            <h2>💾 Сохранение изменений</h2>
+            <p>Добавьте или удалите сотрудников, поменяйте пороги светофора — затем нажмите кнопку ниже. Браузер скачает <b>полноценный обновлённый HTML-файл</b> со всеми вкладками и расчётами, в который уже вшиты ваши настройки. Старый файл можно удалить.</p>
+            <br>
+            <button class="btn-save-html" id="saveHtmlBtn">📥 Скачать обновлённый HTML-файл</button>
+        </div>
+        
+        <div class="settings-block fx-reveal">
+            <div class="settings-block-head">
+                <h3>🚦 Светофор процентов</h3>
+                <button class="btn-calc" id="saveThresholdsBtn">💾 Применить пороги</button>
+            </div>
+            <p class="settings-hint">≥ «зелёный» — зелёная ячейка, ≥ «жёлтый» — жёлтая, ниже — красная.</p>
+            <div id="thresholdsContainer" class="thresholds-grid"></div>
+        </div>
+        
+        <div class="settings-block fx-reveal">
+            <div class="settings-block-head">
+                <h3>👥 Команды и сотрудники</h3>
+            </div>
+            <div class="add-team-form">
+                <input type="text" id="newTeamName" placeholder="Название новой команды" class="text-input">
+                <button class="btn-calc" id="addTeamBtn">➕ Добавить команду</button>
+            </div>
+            <div id="teamsAdminContainer"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+var _htmlTemplate = document.documentElement.outerHTML;
+
+/* ============================================================
+   СОСТОЯНИЕ + КОНСТАНТЫ
+   ============================================================ */
+var DEFAULT_STATE = {
+    teamGroups: {
+        "ГРУППА ТАНИ": [
+            "Вострецова Алёна", "Куликова Эмма", "Васильева Ольга", "Гаврилова Алёна",
+            "Ковкина Анастасия", "Попова Алина", "Туманова Юлия", "Васильева Кристина",
+            "Гончарова Алина", "Павлова Дарья", "Рудакова Ангелина", "Минина Анастасия",
+            "Лихачева Анастасия", "Баринова Таисия", "Булгакова Юлия", "Смирнова Елизавета",
+            "Лелик Дарья", "Васильченко Елизавета", "Макаревич Полина", "Галеева Ева", "Булатова Ирина"
+        ],
+        "ГРУППА ЭЛИНЫ": [
+            "Журина Виктория", "Герасимова Анастасия", "Романова Екатерина", "Смирнова Кристина",
+            "Мальцева Наталья", "Иванова Алина", "Беляева Ольга", "Гусева Анастасия",
+            "Долгова Диана", "Савочкина Яна", "Буравинская Вероника", "Валерия Полякова",
+            "Такмакова Анастасия", "Шарапатова Анна", "Рустамова Динара", "Алина Скворцова",
+            "Майя Горбова", "Путкарадзе Роза", "Степанович Ольга", "Ульяна Колесник",
+            "Яна Ливанович", "Гришина Ксения", "Александра Науменко", "Чуракова Ирина",
+            "Кочеткова Анастасия", "Аксенова Полина", "Лавриненкова Любовь", "Родина Валерия", "Воганова Елена"
+        ],
+        "ГРУППА ЮЛИ": [
+            "Алевтина Яриш", "Анастасия Соловьёва", "Раковецкая Анна", "Кристина Корохова",
+            "Шилова Анастасия", "Дунаускас Наталья", "Дарабаих Елизавета", "Майорова Екатерина",
+            "Шерогорова Юлия", "Пирогова Валерия", "Снежкова Любовь", "Ирина Перевозова",
+            "Мухаметзакирова Ляйсан", "Сенюшкина Стефания", "Макеева Наталья", "Савченко Анастасия",
+            "Калиненко Анна", "Шарова Альфия", "Келлер Юстина", "Посадская Полина",
+            "Шевченко Дарья", "Постникова Полина", "Компанец Марина", "Шустрова Ольга",
+            "Катунина Софья", "Бирюкова Екатерина", "Фоминова Мария", "Соколова Виктория"
+        ],
+        "ГРУППА СВЕТЛАНЫ": [
+            "Минеева Софья", "Капкова Полина", "Игнатова Анна", "Маковецкая Кира",
+            "Котикова Кристина", "Щербатых Ольга", "Рыльцова Юлия", "Барсукова Арина",
+            "Козлова Татьяна", "Саитова Аделина", "Квиткина Виктория", "Оганесова Ева",
+            "Николаева Анна", "Извекова Екатерина", "Кузьмина Юлия", "Чазова Виктория"
+        ]
+    },
+    settings: {
+        attendance: {
+            convDia: { green: 33, yellow: 30 },
+            convMpvl: { green: 12, yellow: 10 },
+            convAppt: { green: 32, yellow: 25 }
+        },
+        traffic: {
+            cvNazn: { green: 30, yellow: 24 },
+            cvArr: { green: 31, yellow: 25 }
+        }
+    }
+};
+
+var appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+(function loadState() {
+    var el = document.getElementById('saved-app-state');
+    if (el && el.textContent.trim()) { 
+        try { 
+            var loaded = JSON.parse(el.textContent); 
+            if (loaded.teamGroups) appState.teamGroups = loaded.teamGroups;
+            if (loaded.settings) {
+                for (var g in DEFAULT_STATE.settings) {
+                    if (!loaded.settings[g]) {
+                        loaded.settings[g] = DEFAULT_STATE.settings[g];
+                    } else {
+                        for (var k in DEFAULT_STATE.settings[g]) {
+                            if (loaded.settings[g][k] === undefined) {
+                                loaded.settings[g][k] = DEFAULT_STATE.settings[g][k];
+                            }
+                        }
+                    }
+                }
+                appState.settings = loaded.settings;
+            }
+        } catch(e) { console.error('parse state error', e); } 
+    }
+})();
+
+var NECA_KEYWORDS = ["мужчин", "снг", "+60", "автобрак", "банкрот", "просроч", "больше 47", "до 18", "дубль", "по-русски", "без обучени", "наша учениц"];
+var THRESHOLD_META = [
+    { group: "attendance", key: "convDia",  title: "🍀 Доходимость: CV назначение/проведено" },
+    { group: "attendance", key: "convMpvl", title: "🍀 Доходимость: КВ МПВЛ" },
+    { group: "attendance", key: "convAppt", title: "🍀 Доходимость: КВ из лида в назначение" },
+    { group: "traffic",    key: "cvNazn",   title: "🦋 Трафик: CV назначено/обработано" },
+    { group: "traffic",    key: "cvArr",    title: "🦋 Трафик: CV дошло/назначено" }
+];
+var TAB_THEMES = { 
+    shifts: "", 
+    deals: "theme-sun", 
+    marketing: "theme-sky", 
+    attendance: "theme-mint", 
+    mplTraffic: "theme-lilac", 
+    settings: "theme-slate" 
+};
+
+/* ============================================================
+   ОСНОВНЫЕ УТИЛИТЫ И ФУНКЦИИ
+   ============================================================ */
+function showToast(msg, type) {
+    var stack = document.getElementById('toastStack');
+    var t = document.createElement('div');
+    t.className = 'toast' + (type === 'err' ? ' err' : '');
+    t.innerHTML = '<span class="t-ico">' + (type === 'err' ? '⚠️' : '✅') + '</span><span>' + msg + '</span>';
+    stack.appendChild(t);
+    requestAnimationFrame(function(){ t.classList.add('show'); });
+    setTimeout(function(){
+        t.classList.remove('show');
+        setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 450);
+    }, 3200);
+}
+
+function normalizeString(str) { 
+    if (!str) return ""; 
+    return String(str).trim().toLowerCase().split(/\s+/).sort().join(" "); 
+}
+
+function findColumnName(row, targetPhrase) {
+    if (!row) return null; 
+    var target = targetPhrase.toLowerCase().replace(/\s+/g, "");
+    for (var key in row) { 
+        if (!key) continue; 
+        var cleanKey = String(key).toLowerCase().replace(/\s+/g, ""); 
+        if (cleanKey.indexOf(target) !== -1 || target.indexOf(cleanKey) !== -1) return key; 
+    }
+    return null;
+}
+
+function getFieldValue(row, subKey) {
+    var target = subKey.toLowerCase();
+    for (var key in row) { 
+        if (key.toLowerCase().indexOf(target) !== -1) return row[key]; 
+    } 
+    return null;
+}
+
+function readDataFile(file, isWin1251) {
+    return new Promise(function(resolve, reject) {
+        if (!file) { resolve([]); return; }
+        var ext = file.name.split(".").pop().toLowerCase();
+        
+        if (ext === "csv") {
+            Papa.parse(file, { 
+                header: true, 
+                skipEmptyLines: true, 
+                encoding: isWin1251 ? "windows-1251" : "UTF-8", 
+                complete: function(r){ resolve(r.data); }, 
+                error: function(err){ reject(err); } 
+            });
+        } else {
+            var reader = new FileReader();
+            reader.onload = function(e) { 
+                try { 
+                    var wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" }); 
+                    resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" })); 
+                } catch (err) { reject(err); } 
+            };
+            reader.onerror = function(err){ reject(err); }; 
+            reader.readAsArrayBuffer(file);
+        }
+    });
+}
+
+function parseBitrixDate(str) {
+    if (!str) return null; 
+    var clean = String(str).replace(/"/g, "").trim(); 
+    var p = clean.split(" "); 
+    if (!p[0]) return null;
+    
+    var parts = p[0].split(".").map(Number); 
+    var d = parts[0], m = parts[1], y = parts[2]; 
+    var h = 0, min = 0, s = 0;
+    
+    if (p[1]) { 
+        var tm = p[1].split(":").map(Number); 
+        h = tm[0] || 0; min = tm[1] || 0; s = tm[2] || 0; 
+    }
+    
+    if (!y || isNaN(m) || !d) return null; 
+    return new Date(y, m - 1, d, h, min, s);
+}
+
+function trafficLightClass(value, threshold) {
+    if (!threshold) return ""; 
+    if (value >= threshold.green) return "bg-green"; 
+    if (value >= threshold.yellow) return "bg-yellow"; 
+    return "bg-red";
+}
+
+function fmtPct(num) { 
+    return num.toFixed(2).replace(".", ",") + "%"; 
+}
+
+function bindFileName(inputId, barId, nameId) {
+    var el = document.getElementById(inputId);
+    if(el) {
+        el.addEventListener("change", function(e) { 
+            var f = e.target.files[0]; 
+            if (f) { 
+                document.getElementById(nameId).textContent = f.name; 
+                document.getElementById(barId).style.display = "flex"; 
+            } 
+        });
+    }
+}
+
+function escAttr(s) { 
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); 
+}
+
+/* ============================================================
+   ВКЛАДКА 1: СМЕНЫ
+   ============================================================ */
+var shiftsWorkbook = null, shiftsResults = {}, shiftsSheetName = "";
+
+function detectSchedule(raw) {
+    if (raw == null) return "Не указан";
+    if (raw instanceof Date) { 
+        var d = raw.getDate(); 
+        return (d === 2) ? "2/2" : (d === 5) ? "5/2" : (d + "/" + (raw.getMonth() + 1)); 
+    }
+    var s = String(raw).toLowerCase().trim();
+    if (/^\d+$/.test(s)) { 
+        var jsDate = new Date(Math.round((parseInt(s) - 25569) * 86400 * 1000)); 
+        var dd = jsDate.getUTCDate(); 
+        return (dd === 2) ? "2/2" : (dd === 5) ? "5/2" : s; 
+    }
+    if (s.indexOf("ненорм") !== -1) return "Ненормированный";
+    if (s.indexOf("5/2") !== -1) return "5/2"; 
+    if (s.indexOf("2/2") !== -1) return "2/2"; 
+    return String(raw).trim();
+}
+
+function processShiftsSheet(sn) {
+    shiftsSheetName = sn; 
+    var rows = XLSX.utils.sheet_to_json(shiftsWorkbook.Sheets[sn], { header: 1 });
+    var res = {}, grp = "Без группы", schedIdx = -1;
+    
+    for (var r = 0; r < Math.min(10, rows.length); r++) { 
+        if (!rows[r]) continue;
+        for (var c = rows[r].length - 1; c >= 0; c--) {
+            if (String(rows[r][c] || "").toLowerCase().indexOf("график") !== -1) { 
+                schedIdx = c; break; 
+            }
+        }
+        if (schedIdx !== -1) break; 
+    }
+    
+    rows.forEach(function(r) { 
+        if (!r || !r[0]) return; 
+        var name = String(r[0]).trim();
+        if (name.toLowerCase().indexOf("группа") !== -1 || name.toLowerCase().indexOf("команда") !== -1) { 
+            grp = name; return; 
+        }
+        if (name.indexOf("ИТОГО") !== -1 || name === "0" || name.indexOf("Менеджер") !== -1) return;
+        
+        var rawSched = null; 
+        if (schedIdx !== -1 && r[schedIdx] != null) {
+            rawSched = r[schedIdx]; 
+        } else { 
+            for (var j = r.length - 1; j > 2; j--) {
+                if (r[j]) { rawSched = r[j]; break; } 
+            }
+        }
+        
+        var sType = detectSchedule(rawSched), isNenorm = sType === "Ненормированный";
+        var th = 0, ts = 0, sk = 0, ab = 0, vc = 0;
+        
+        for (var k = 3; k < r.length; k++) { 
+            if (k === schedIdx) continue;
+            var cc = String(r[k] || "").trim(), m = cc.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})/);
+            if (m) { 
+                var hh = m[2] - m[1]; 
+                if (hh < 0) hh += 24; 
+                if (hh >= 12) hh -= 2; 
+                else if (hh >= 9) hh -= 1; 
+                th += hh; 
+                if (!isNenorm) ts++; 
+            }
+            else if (cc.toLowerCase().indexOf("бол") !== -1) sk++; 
+            else if (cc.toLowerCase().indexOf("прогул") !== -1) ab++; 
+            else if (cc.toLowerCase().indexOf("отпуск") !== -1) vc++; 
+        }
+        if (isNenorm) ts = Math.round((th / 8) * 100) / 100;
+        if (ts > 0 || sk > 0 || ab > 0 || vc > 0) { 
+            if (!res[grp]) res[grp] = []; 
+            res[grp].push({ name: name, nick: r[1] || "", type: sType, shifts: ts, hours: th, sick: sk, absent: ab, vac: vc }); 
+        } 
+    });
+    
+    shiftsResults = res; 
+    renderShiftsTable(res);
+}
+
+function renderShiftsTable(groups) {
+    var tb = document.getElementById("tableBodyShifts"); 
+    tb.innerHTML = ""; 
+    var tp = 0, th = 0, ts = 0;
+    
+    for (var g in groups) { 
+        tb.innerHTML += '<tr class="group-row"><td colspan="6">🐾 ' + g + "</td></tr>";
+        groups[g].forEach(function(e) { 
+            tp++; th += e.hours; ts += e.sick; 
+            var b = [];
+            if (e.sick > 0) b.push('<span class="badge badge-sick">😷 Болел ' + e.sick + "</span>"); 
+            if (e.vac > 0) b.push('<span class="badge badge-vacation">🌴 Отпуск ' + e.vac + "</span>"); 
+            if (e.absent > 0) b.push('<span class="badge badge-absent">⚠️ Прогул ' + e.absent + "</span>");
+            var cls = (e.type === "2/2") ? "type-22" : (e.type === "5/2") ? "type-52" : (e.type === "Ненормированный") ? "type-nenorm" : "";
+            tb.innerHTML += "<tr><td class='cell-name'>" + e.name + "</td><td class='cell-nick'>" + e.nick + "</td><td><span class='cell-schedule " + cls + "'>" + e.type + "</span></td><td>" + e.shifts + "</td><td class='cell-hours'>" + e.hours + " ч.</td><td>" + (b.join("") || "—") + "</td></tr>"; 
+        }); 
+    }
+    document.getElementById("statPeople").textContent = tp; 
+    document.getElementById("statHours").textContent = th; 
+    document.getElementById("statSick").textContent = ts; 
+    document.getElementById("statAvg").textContent = tp ? Math.round(th / tp) + " ч." : "—";
+}
+
+function exportShifts() {
+    var wb = XLSX.utils.book_new(), aoa = [["Группа","Сотрудник","Ник","График","Смен","Часов"]];
+    for (var g in shiftsResults) {
+        shiftsResults[g].forEach(function(e){ aoa.push([g, e.name, e.nick, e.type, e.shifts, e.hours]); });
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Смены"); 
+    XLSX.writeFile(wb, "Смены_" + (shiftsSheetName || "отчет") + ".xlsx");
+}
+
+function initShifts() {
+    var el = document.getElementById("fileUploadShifts");
+    if(!el) return;
+    el.addEventListener("change", function(e) {
+        var f = e.target.files[0]; 
+        if (!f) return; 
+        var r = new FileReader();
+        r.onload = function(ev) { 
+            shiftsWorkbook = XLSX.read(ev.target.result, { type: "binary", cellDates: true });
+            var sel = document.getElementById("sheetSelectShifts"); 
+            sel.innerHTML = "";
+            shiftsWorkbook.SheetNames.forEach(function(n){ 
+                var o = document.createElement("option"); o.textContent = n; sel.appendChild(o); 
+            });
+            document.getElementById("fileLoadedNameShifts").textContent = f.name; 
+            document.getElementById("fileLoadedBarShifts").style.display = "flex"; 
+            document.getElementById("toolbarShifts").style.display = "flex"; 
+            document.getElementById("statsBarShifts").style.display = "grid"; 
+            document.getElementById("tableCardShifts").style.display = "block"; 
+            processShiftsSheet(shiftsWorkbook.SheetNames[0]); 
+        };
+        r.readAsBinaryString(f); 
+    });
+    document.getElementById("sheetSelectShifts").addEventListener("change", function() { processShiftsSheet(this.value); }); 
+    document.getElementById("exportShiftsBtn").addEventListener("click", exportShifts);
+}
+
+/* ============================================================
+   ВКЛАДКА 2: СДЕЛКИ
+   ============================================================ */
+var rawDealsCache = [];
+
+function runDealsAnalytics() {
+    if (!rawDealsCache.length) return;
+    
+    var dtFrom = new Date(document.getElementById("dtFromInput").value);
+    var dtTo = new Date(document.getElementById("dtToInput").value);
+    var total = 0, neca = 0, men = 0, age = 0, bankr = 0, cis = 0, reasons = {}, validDates = 0;
+    
+    var shiftRows = rawDealsCache.filter(function(row) {
+        var dStr = getFieldValue(row, "дата создани") || getFieldValue(row, "дата"); 
+        var jsDate = parseBitrixDate(dStr); 
+        if (!jsDate) return false; 
+        validDates++;
+        if (jsDate >= dtFrom && jsDate <= dtTo) { total++; return true; } 
+        return false; 
+    });
+    
+    shiftRows.forEach(function(row) { 
+        var reason = String(getFieldValue(row, "причина закрыт") || "").trim(); 
+        if (!reason) return;
+        
+        reasons[reason] = (reasons[reason] || 0) + 1; 
+        var rLow = reason.toLowerCase();
+        
+        if (NECA_KEYWORDS.some(function(kw){ return rLow.indexOf(kw) !== -1; })) neca++;
+        if (rLow.indexOf("мужчин") !== -1) men++; 
+        if (rLow.indexOf("больше 47") !== -1 || rLow.indexOf("до 18") !== -1 || rLow.indexOf("+60") !== -1) age++; 
+        if (rLow.indexOf("банкрот") !== -1 || rLow.indexOf("просроч") !== -1) bankr++; 
+        if (rLow.indexOf("снг") !== -1) cis++; 
+    });
+    
+    document.getElementById("dTotal").textContent = total; 
+    document.getElementById("dNeca").textContent = neca; 
+    document.getElementById("dMen").textContent = men; 
+    document.getElementById("dAge").textContent = age; 
+    document.getElementById("dBankrupt").textContent = bankr; 
+    document.getElementById("dCis").textContent = cis; 
+    document.getElementById("dealsLogText").textContent = "📊 Строк: " + rawDealsCache.length + " | Дат: " + validDates + " | В сутки: " + total;
+    
+    var tbody = document.getElementById("tableBodyDeals"); 
+    tbody.innerHTML = '<tr class="group-row"><td colspan="3">☀️ Распределение причин отказов</td></tr>';
+    
+    Object.keys(reasons).map(function(k){ return [k, reasons[k]]; }).sort(function(a, b){ return b[1] - a[1]; }).forEach(function(pair) {
+        var name = pair[0], count = pair[1];
+        var isNeca = NECA_KEYWORDS.some(function(kw){ return name.toLowerCase().indexOf(kw) !== -1; });
+        var badge = isNeca ? '<span class="badge badge-neca">🚫 Не ЦА</span>' : '<span class="badge badge-other">Отказ</span>';
+        var pct = total ? ((count / total) * 100).toFixed(1) + "%" : "0%";
+        tbody.innerHTML += "<tr><td class='cell-name'>" + name + " " + badge + "</td><td style='font-weight:700;font-size:14px'>" + count + "</td><td style='color:var(--theme-text-sec);font-weight:600'>" + pct + "</td></tr>"; 
+    });
+    
+    document.getElementById("dealsFilterPanel").style.display = "flex"; 
+    document.getElementById("statsBarDeals").style.display = "grid"; 
+    document.getElementById("tableCardDeals").style.display = "block";
+}
+
+function initDeals() {
+    var el = document.getElementById("fileUploadDeals");
+    if(!el) return;
+    el.addEventListener("change", function(e) {
+        var f = e.target.files[0]; 
+        if (!f) return; 
+        document.getElementById("fileLoadedNameDeals").textContent = f.name; 
+        document.getElementById("fileLoadedBarDeals").style.display = "flex";
+        
+        readDataFile(f, true).then(function(data){ 
+            rawDealsCache = data; 
+            runDealsAnalytics(); 
+        }).catch(function(err){ 
+            showToast("Ошибка чтения: " + err.message, 'err'); 
+        }); 
+    });
+    
+    document.getElementById("dealsRecalcBtn").addEventListener("click", runDealsAnalytics);
+    var now = new Date(), to = new Date(now); to.setHours(21, 0, 0, 0); 
+    var from = new Date(to.getTime() - 24 * 3600 * 1000);
+    var pad = function(n){ return String(n).padStart(2, "0"); }; 
+    var fmtDT = function(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+    document.getElementById("dtFromInput").value = fmtDT(from); 
+    document.getElementById("dtToInput").value = fmtDT(to);
+}
+
+/* ============================================================
+   ВКЛАДКА 3: МАРКЕТИНГ
+   ============================================================ */
+var rawMarketingCache = [], marketingExportStore = [];
+
+function buildMarketingSubHeader() { 
+    var html = ""; 
+    for (var i = 0; i < 13; i++) { html += "<th>Кол-во</th><th>CV %</th>"; }
+    document.getElementById("marketingSubHeader").innerHTML = html; 
+}
+
+function runMarketingAnalytics() {
+    if (!rawMarketingCache.length) return;
+    
+    var chosenCol = document.getElementById("utmColumnSelect").value;
+    var tags = document.getElementById("utmTagsInput").value.split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+    
+    if (!tags.length) { showToast("Укажите хотя бы одну метку", 'err'); return; }
+    
+    marketingExportStore = []; 
+    var tbody = document.getElementById("tableBodyMarketing"); 
+    tbody.innerHTML = "";
+    
+    var stageOf = function(r) { 
+        var st = getFieldValue(r, "стадия сделки") || getFieldValue(r, "стадия") || ""; 
+        return String(st).trim().toUpperCase(); 
+    };
+    var reasonOf = function(r) { 
+        var s = getFieldValue(r, "причина закрыт") || ""; 
+        return String(s).toLowerCase(); 
+    };
+    
+    tags.forEach(function(tag) {
+        // ТОЧНЫЙ ПОИСК ПО МЕТКЕ (строгое равенство)
+        var matched = rawMarketingCache.filter(function(row) { 
+            var val = getFieldValue(row, chosenCol); 
+            return val && String(val).trim().toLowerCase() === tag.toLowerCase(); 
+        });
+        
+        var prislo = matched.length;
+        var obrab = matched.filter(function(r){ return stageOf(r) !== "НОВЫЙ ЛИД"; }).length;
+        
+        // Назначено (Считаем строго по колонке "Кем передано в ОП")
+        var naznRows = matched.filter(function(r) { 
+            var val = getFieldValue(r, "кем передано"); 
+            return val && String(val).trim() !== ""; 
+        });
+        var nazn = naznRows.length;
+        
+        // Дошло (Считаем строго по колонке "ДИА проведена")
+        var doshloRows = matched.filter(function(r) { 
+            var val = getFieldValue(r, "диа проведена"); 
+            return val && String(val).trim() !== ""; 
+        });
+        var doshlo = doshloRows.length;
+        
+        var cvDoshlo = nazn > 0 ? ((doshlo / nazn) * 100).toFixed(2) + "%" : "0.00%";
+        
+        // ЗНР
+        var znrRows = matched.filter(function(r){ return stageOf(r).indexOf("ЗАКРЫТО НЕ РЕАЛИЗОВАНО") !== -1; }); 
+        var znr = znrRows.length;
+        
+        var cvNazn = prislo > 0 ? ((nazn / prislo) * 100).toFixed(2) + "%" : "0.00%";
+        var cvZnr = obrab > 0 ? ((znr / obrab) * 100).toFixed(2) + "%" : "0.00%";
+        
+        var cnt = { men:0, age:0, bankr:0, cis:0, neost:0, ndz:0, platn:0, mat:0, vozr:0, bezob:0, dubl:0, rus:0, uchen:0 };
+        
+        znrRows.forEach(function(r) { 
+            var cln = reasonOf(r);
+            if (cln.indexOf("мужчин") !== -1) cnt.men++; 
+            if (cln.indexOf("47") !== -1 || cln.indexOf("60") !== -1 || cln.indexOf("18") !== -1) cnt.age++; 
+            if (cln.indexOf("банкрот") !== -1 || cln.indexOf("просроч") !== -1) cnt.bankr++; 
+            if (cln.indexOf("снг") !== -1) cnt.cis++; 
+            if (cln.indexOf("не остав") !== -1) cnt.neost++; 
+            if (cln.indexOf("недозвон") !== -1) cnt.ndz++; 
+            if (cln.indexOf("платн") !== -1 || cln.indexOf("план") !== -1) cnt.platn++; 
+            if (cln.indexOf("негатив") !== -1 || cln.indexOf("мат") !== -1) cnt.mat++; 
+            if (cln.indexOf("отработано") !== -1 || cln.indexOf("возражен") !== -1) cnt.vozr++; 
+            if (cln.indexOf("без обучен") !== -1) cnt.bezob++; 
+            if (cln.indexOf("дубль") !== -1) cnt.dubl++; 
+            if (cln.indexOf("по-русски") !== -1) cnt.rus++; 
+            if (cln.indexOf("учениц") !== -1) cnt.uchen++; 
+        });
+        
+        var raw = [cnt.men, cnt.age, cnt.bankr, cnt.cis, cnt.neost, cnt.ndz, cnt.platn, cnt.mat, cnt.vozr, cnt.bezob, cnt.dubl, cnt.rus, cnt.uchen];
+        
+        marketingExportStore.push({ 
+            tag: tag, prislo: prislo, obrab: obrab, nazn: nazn, cvNazn: cvNazn, 
+            doshlo: doshlo, cvDoshlo: cvDoshlo, znr: znr, cvZnr: cvZnr, 
+            reasonsRaw: raw, znrNum: znr 
+        });
+        
+        var cells = raw.map(function(num) { 
+            var pct = znr > 0 ? ((num / znr) * 100).toFixed(2) + "%" : "0.00%"; 
+            return "<td><b>" + num + "</b></td><td style='color:var(--theme-text-sec);font-weight:600'>" + pct + "</td>"; 
+        }).join("");
+        
+        tbody.innerHTML += "<tr><td class='cell-name' style='color:var(--theme-accent);font-weight:700'>" + tag + "</td><td><b>" + prislo + "</b></td><td>" + obrab + "</td><td style='color:var(--green);font-weight:700'>" + nazn + "</td><td style='font-weight:700'>" + cvNazn + "</td><td style='color:var(--green);font-weight:700'>" + doshlo + "</td><td style='font-weight:700'>" + cvDoshlo + "</td><td><b>" + znr + "</b></td><td style='color:#c2185b;font-weight:700'>" + cvZnr + "</td>" + cells + "</tr>"; 
+    });
+    
+    document.getElementById("marketingLogText").textContent = "✅ Воронка построена. Записей: " + rawMarketingCache.length; 
+    document.getElementById("tableCardMarketing").style.display = "block";
+}
+
+function exportMarketingExcel() {
+    if (!marketingExportStore.length) { showToast("Сначала рассчитайте воронку", 'err'); return; }
+    var wb = XLSX.utils.book_new();
+    var base = ["UTM Метка","Пришло","Обработано","Назначено","CV в назначение %","Дошло","CV Доход. %","ЗНР","CV в ЗНР %"];
+    var names = ["Мужчины","Не ЦА возр.","Банкрот/просроч.","Из СНГ","Не оставлял заявку","Недозвон","Отказ от платн.","Жесткий негатив","Возраж.отказ","Без обучения","Дубль","Не понимает по-русски","Уже наша ученица"];
+    var headers = base.slice(); names.forEach(function(n){ headers.push(n, "CV из ЗНР %"); }); 
+    var aoa = [headers];
+    
+    marketingExportStore.forEach(function(row) { 
+        var er = [row.tag, row.prislo, row.obrab, row.nazn, row.cvNazn, row.doshlo, row.cvDoshlo, row.znr, row.cvZnr]; 
+        row.reasonsRaw.forEach(function(num){ er.push(num, row.znrNum ? ((num / row.znrNum) * 100).toFixed(2) + "%" : "0.00%"); }); 
+        aoa.push(er); 
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Маркетинг"); 
+    XLSX.writeFile(wb, "Маркетинг_Отчет_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+}
+
+function initMarketing() {
+    var el = document.getElementById("fileUploadMarketing");
+    if(!el) return;
+    buildMarketingSubHeader();
+    
+    el.addEventListener("change", function(e) {
+        var f = e.target.files[0]; if (!f) return; 
+        document.getElementById("fileLoadedNameMarketing").textContent = f.name; 
+        document.getElementById("fileLoadedBarMarketing").style.display = "flex";
+        
+        readDataFile(f, true).then(function(data){ 
+            rawMarketingCache = data; 
+            document.getElementById("marketingControls").style.display = "flex"; 
+            if(document.getElementById("utmTagsInput").value.trim() === "") {
+                 document.getElementById("marketingAutoBtn").click();
+            }
+        }).catch(function(err){ showToast("Ошибка чтения: " + err.message, 'err'); }); 
+    });
+    
+    document.getElementById("marketingAutoBtn").addEventListener("click", function() {
+        if (!rawMarketingCache.length) { showToast("Сначала загрузите файл", 'err'); return; }
+        var chosenCol = document.getElementById("utmColumnSelect").value;
+        var tagsSet = {};
+        
+        rawMarketingCache.forEach(function(row) {
+            var val = getFieldValue(row, chosenCol);
+            if (val) {
+                var strVal = String(val).trim();
+                if (strVal !== "" && strVal !== "0" && strVal.toLowerCase() !== "undefined") {
+                    tagsSet[strVal] = true;
+                }
+            }
+        });
+        
+        var tagsArr = Object.keys(tagsSet).slice(0, 100); 
+        if (tagsArr.length === 0) { showToast("В этой колонке не найдено данных", 'err'); } 
+        else {
+            document.getElementById("utmTagsInput").value = tagsArr.join("\n");
+            showToast("✅ Найдено уникальных меток: " + tagsArr.length);
+        }
+    });
+
+    document.getElementById("marketingCalcBtn").addEventListener("click", runMarketingAnalytics); 
+    document.getElementById("exportMarketingBtn").addEventListener("click", exportMarketingExcel);
+}
+
+/* ============================================================
+   ВКЛАДКА 4: ДОХОДИМОСТЬ
+   ============================================================ */
+var attendanceStatsStore = null;
+
+function processAttendanceFiles() {
+    var fLeads = document.getElementById("fileLeads").files[0];
+    var fAppt = document.getElementById("fileAppt").files[0];
+    var fDia = document.getElementById("fileDia").files[0];
+    if (!fLeads && !fAppt && !fDia) { showToast("Загрузите хотя бы один файл", 'err'); return; }
+    
+    var groups = appState.teamGroups; 
+    if (!groups || Object.keys(groups).length === 0) { showToast("Сначала добавьте команды во вкладке «Настройки»", 'err'); return; }
+    
+    document.getElementById("attendanceLoading").style.display = "block"; 
+    document.getElementById("attendanceTableCard").style.display = "none";
+    var stats = {}; 
+    for (var g in groups) {
+        groups[g].forEach(function(name){ stats[normalizeString(name)] = { name: name, leads: 0, appt: 0, dia: 0, revenue: 0 }; });
+    }
+    
+    var isWin = document.getElementById("win1251Attendance").checked;
+    
+    Promise.all([ readDataFile(fLeads, isWin), readDataFile(fAppt, isWin), readDataFile(fDia, isWin) ]).then(function(arr) {
+        var leadsData = arr[0], apptData = arr[1], diaData = arr[2];
+        
+        if (leadsData.length) { 
+            var col = findColumnName(leadsData[0], "1line Первый звонок кто"); 
+            if (col) leadsData.forEach(function(row){ if (row[col]) { var mk = normalizeString(row[col]); if (stats[mk]) stats[mk].leads++; } }); 
+        }
+        if (apptData.length) { 
+            var col2 = findColumnName(apptData[0], "1line Кем передано в ОП"); 
+            if (col2) apptData.forEach(function(row){ if (row[col2]) { var mk = normalizeString(row[col2]); if (stats[mk]) stats[mk].appt++; } }); 
+        }
+        if (diaData.length) { 
+            var col3 = findColumnName(diaData[0], "1line Кем передано в ОП"); 
+            var revCol = findColumnName(diaData[0], "Оплачено, руб"); 
+            if (col3) diaData.forEach(function(row){ 
+                if (row[col3]) { 
+                    var mk = normalizeString(row[col3]); 
+                    if (stats[mk]) { 
+                        stats[mk].dia++; 
+                        if (revCol && row[revCol]) { 
+                            var v = parseFloat(String(row[revCol]).replace(/\s/g, "").replace(",", ".")); 
+                            if (!isNaN(v)) stats[mk].revenue += v; 
+                        } 
+                    } 
+                } 
+            }); 
+        }
+        
+        attendanceStatsStore = stats; 
+        renderAttendanceTable(stats, groups);
+    }).catch(function(err){ 
+        console.error(err); showToast("Ошибка обработки: " + err.message, 'err'); 
+    }).then(function(){ 
+        document.getElementById("attendanceLoading").style.display = "none"; 
+        document.getElementById("attendanceTableCard").style.display = "block"; 
+    });
+}
+
+function attendanceRow(name, leads, appt, dia, revenue, isTotal, cssClass) {
+    var th = appState.settings.attendance || {}; 
+    var convDia = appt > 0 ? (dia / appt) * 100 : 0;
+    var convMpvl = leads > 0 ? (dia / leads) * 100 : 0;
+    var convAppt = leads > 0 ? (appt / leads) * 100 : 0;
+    
+    var clsDia = "", clsMpvl = "", clsAppt = "";
+    if (!isTotal) { 
+        if (appt > 0) clsDia = trafficLightClass(convDia, th.convDia); else clsDia = "bg-red"; 
+        if (leads > 0) clsMpvl = trafficLightClass(convMpvl, th.convMpvl); else clsMpvl = "bg-red"; 
+        if (leads > 0) clsAppt = trafficLightClass(convAppt, th.convAppt); 
+    }
+    
+    var fv = function(v){ return (v === 0 ? "0" : v); }; 
+    var fm = function(v){ return (v === 0 ? "0" : v.toLocaleString("ru-RU")); };
+    
+    return "<tr class='" + (cssClass || "") + "'><td>" + name + "</td><td>" + fv(appt) + "</td><td>" + fv(dia) + "</td><td class='" + clsDia + "'>" + (appt > 0 ? fmtPct(convDia) : "0,00%") + "</td><td>" + fv(leads) + "</td><td class='" + clsMpvl + "'>" + (leads > 0 ? fmtPct(convMpvl) : "0,00%") + "</td><td class='" + clsAppt + "'>" + (leads > 0 ? fmtPct(convAppt) : "0,00%") + "</td><td style='font-weight:700;color:var(--theme-accent)'>" + fm(revenue) + "</td></tr>";
+}
+
+function renderAttendanceTable(stats, groups) {
+    var html = "<table><thead><tr><th>Менеджер</th><th>Назначено</th><th>Проведено ДИА</th><th>CV назн/проведено</th><th>Всего лидов</th><th>КВ МПВЛ</th><th>КВ лид→назнач</th><th>Оплачено, руб</th></tr></thead><tbody>";
+    var grand = { leads: 0, appt: 0, dia: 0, revenue: 0 };
+    for (var g in groups) { 
+        html += "<tr><td colspan='8' class='group-header'>" + g + "</td></tr>"; 
+        var gt = { leads: 0, appt: 0, dia: 0, revenue: 0 };
+        groups[g].forEach(function(name){ 
+            var d = stats[normalizeString(name)]; gt.leads += d.leads; gt.appt += d.appt; gt.dia += d.dia; gt.revenue += d.revenue; 
+            html += attendanceRow(d.name, d.leads, d.appt, d.dia, d.revenue, false, ""); 
+        });
+        grand.leads += gt.leads; grand.appt += gt.appt; grand.dia += gt.dia; grand.revenue += gt.revenue; 
+        html += attendanceRow("ИТОГО " + g, gt.leads, gt.appt, gt.dia, gt.revenue, true, "group-total"); 
+    }
+    html += attendanceRow("ИТОГО ПО ВСЕМ ГРУППАМ", grand.leads, grand.appt, grand.dia, grand.revenue, true, "grand-total"); 
+    html += "</tbody></table>"; 
+    document.getElementById("attendanceTableContainer").innerHTML = html;
+}
+
+function exportAttendanceExcel() {
+    if (!attendanceStatsStore) { showToast("Сначала постройте отчёт", 'err'); return; }
+    var groups = appState.teamGroups; var wb = XLSX.utils.book_new();
+    var aoa = [["Менеджер","Назначено","Проведено ДИА","CV назн/проведено","Всего лидов","КВ МПВЛ","КВ лид→назнач","Оплачено, руб"]];
+    var gt = { l: 0, a: 0, d: 0, r: 0 };
+    for (var g in groups) { 
+        aoa.push([g, "", "", "", "", "", "", ""]); var gr = { l: 0, a: 0, d: 0, r: 0 };
+        groups[g].forEach(function(name){ 
+            var data = attendanceStatsStore[normalizeString(name)]; gr.l += data.leads; gr.a += data.appt; gr.d += data.dia; gr.r += data.revenue;
+            aoa.push([data.name, data.appt, data.dia, data.appt > 0 ? fmtPct(data.dia / data.appt * 100) : "0,00%", data.leads, data.leads > 0 ? fmtPct(data.dia / data.leads * 100) : "0,00%", data.leads > 0 ? fmtPct(data.appt / data.leads * 100) : "0,00%", data.revenue]); 
+        });
+        gt.l += gr.l; gt.a += gr.a; gt.d += gr.d; gt.r += gr.r;
+        aoa.push(["ИТОГО " + g, gr.a, gr.d, gr.a > 0 ? fmtPct(gr.d / gr.a * 100) : "0,00%", gr.l, gr.l > 0 ? fmtPct(gr.d / gr.l * 100) : "0,00%", gr.l > 0 ? fmtPct(gr.a / gr.l * 100) : "0,00%", gr.r]); aoa.push([]); 
+    }
+    aoa.push(["ИТОГО ПО ВСЕМ", gt.a, gt.d, gt.a > 0 ? fmtPct(gt.d / gt.a * 100) : "0,00%", gt.l, gt.l > 0 ? fmtPct(gt.d / gt.l * 100) : "0,00%", gt.l > 0 ? fmtPct(gt.a / gt.l * 100) : "0,00%", gt.r]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Доходимость"); XLSX.writeFile(wb, "Доходимость_ОП_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+}
+
+function initAttendance() {
+    bindFileName("fileLeads", "flBarLeads", "flNameLeads"); 
+    bindFileName("fileAppt", "flBarAppt", "flNameAppt"); 
+    bindFileName("fileDia", "flBarDia", "flNameDia");
+    var btn = document.getElementById("attendanceCalcBtn");
+    if(btn) btn.addEventListener("click", processAttendanceFiles); 
+    var exp = document.getElementById("exportAttendanceBtn");
+    if(exp) exp.addEventListener("click", exportAttendanceExcel);
+}
+
+/* ============================================================
+   ВКЛАДКА 5: ТРАФИК МПЛ (Один файл)
+   ============================================================ */
+var trafficStatsStore = {}, trafficSortedTags = [];
+
+function processTrafficFiles() {
+    var fTraffic = document.getElementById("fileTraffic").files[0];
+    if (!fTraffic) { showToast("Загрузите файл базы сделок", 'err'); return; }
+    
+    var groups = appState.teamGroups; 
+    if (!groups || Object.keys(groups).length === 0) { showToast("Сначала добавьте команды во вкладке «Настройки»", 'err'); return; }
+    
+    var chosenCol = document.getElementById("utmColumnSelectTraffic").value;
+    var isWin = document.getElementById("win1251Traffic").checked;
+    
+    document.getElementById("trafficLoading").style.display = "block"; 
+    document.getElementById("trafficTableCard").style.display = "none";
+    document.getElementById("trafficTableContainer").innerHTML = ""; 
+    document.getElementById("trafficLogText").textContent = "⏳ Чтение файла...";
+    
+    readDataFile(fTraffic, isWin).then(function(data) {
+        var master = {};
+        
+        data.forEach(function(row) {
+            var utmRaw = getFieldValue(row, chosenCol);
+            if (utmRaw && utmRaw !== "0" && String(utmRaw).toLowerCase() !== "undefined") {
+                var utm = String(utmRaw).trim();
+                if (!master[utm]) { 
+                    master[utm] = {}; 
+                    for (var g in groups) {
+                        groups[g].forEach(function(name){ master[utm][normalizeString(name)] = { name: name, leads: 0, appt: 0, arrived: 0 }; });
+                    } 
+                }
+                
+                var fstCall = getFieldValue(row, "первый звонок кто");
+                var passedOP = getFieldValue(row, "кем передано");
+                var diaProv = getFieldValue(row, "диа проведена");
+                
+                var mkL = fstCall && String(fstCall).trim() !== "" ? normalizeString(fstCall) : null;
+                var mkA = passedOP && String(passedOP).trim() !== "" ? normalizeString(passedOP) : null;
+                
+                // 1. Взято в работу (строго по Первый звонок кто)
+                if (mkL && master[utm] && master[utm][mkL]) { 
+                    master[utm][mkL].leads++; 
+                }
+                
+                // 2. Назначено (строго по Кем передано)
+                if (mkA && master[utm] && master[utm][mkA]) { 
+                    master[utm][mkA].appt++; 
+                }
+                
+                // 3. Дошедшие (строго по ДИА Проведена) - если она не пустая, +1 тому кто назначил
+                var isDoshlo = diaProv && String(diaProv).trim() !== "";
+                if (isDoshlo) {
+                    if (mkA && master[utm] && master[utm][mkA]) { 
+                        master[utm][mkA].arrived++; 
+                    }
+                }
+            }
+        });
+
+        var tagTotals = []; 
+        for (var tag in master) { 
+            var sumLeads = 0, hasData = false; 
+            for (var mk in master[tag]) { 
+                sumLeads += master[tag][mk].leads; 
+                if (master[tag][mk].leads > 0 || master[tag][mk].appt > 0 || master[tag][mk].arrived > 0) hasData = true; 
+            } 
+            if (hasData) tagTotals.push({ tag: tag, totalLeads: sumLeads, data: master[tag] }); 
+        }
+        
+        tagTotals.sort(function(a, b){ return b.totalLeads - a.totalLeads; });
+        trafficStatsStore = {}; trafficSortedTags = []; var finalHtml = "";
+        
+        tagTotals.forEach(function(item){ 
+            trafficSortedTags.push(item.tag); trafficStatsStore[item.tag] = item.data; finalHtml += trafficTagTable(item.tag, item.data, groups); 
+        });
+        
+        if (!finalHtml) {
+            document.getElementById("trafficLogText").textContent = "⚠️ Данные по меткам не найдены."; 
+        } else { 
+            document.getElementById("trafficTableContainer").innerHTML = finalHtml; 
+            document.getElementById("trafficLogText").textContent = "✅ Отрисовано меток: " + tagTotals.length; 
+        }
+    }).catch(function(err){ 
+        console.error(err); showToast("Ошибка обработки: " + err.message, 'err'); 
+        document.getElementById("trafficLogText").textContent = "❌ Ошибка."; 
+    }).then(function(){ 
+        document.getElementById("trafficLoading").style.display = "none"; 
+        document.getElementById("trafficTableCard").style.display = "block"; 
+    });
+}
+
+function trafficTagTable(tag, stats, groups) {
+    var html = "<div class='table-card table-scroll analytics-table-wrap' style='margin-bottom:22px'><div style='background:linear-gradient(135deg,var(--theme-btn-g1),var(--theme-btn-g2));color:#fff;padding:13px 18px;font-weight:700;font-size:15px'>🦋 МЕТКА: " + tag + "</div><table><thead><tr><th style='text-align:left'>Менеджер</th><th>Взято в работу</th><th>Назначено</th><th>CV назн/обраб</th><th>Дошло</th><th>CV дошло/назн</th></tr></thead><tbody>";
+    var tagTotal = { leads: 0, appt: 0, arrived: 0 };
+    
+    for (var g in groups) { 
+        var groupHtml = "", gt = { leads: 0, appt: 0, arrived: 0 }, has = false;
+        
+        groups[g].forEach(function(name){ 
+            var d = stats[normalizeString(name)]; 
+            if (d && (d.leads > 0 || d.appt > 0 || d.arrived > 0)) { 
+                gt.leads += d.leads; gt.appt += d.appt; gt.arrived += d.arrived; 
+                groupHtml += trafficRow(d.name, d.leads, d.appt, d.arrived, false, false); has = true; 
+            } 
+        });
+        if (has) { 
+            html += "<tr><td colspan='6' class='group-header' style='font-size:12px'>" + g + "</td></tr>" + groupHtml + trafficRow("Итого " + g, gt.leads, gt.appt, gt.arrived, true, false); 
+            tagTotal.leads += gt.leads; tagTotal.appt += gt.appt; tagTotal.arrived += gt.arrived; 
+        } 
+    }
+    
+    html += trafficRow("ИТОГО ПО МЕТКЕ", tagTotal.leads, tagTotal.appt, tagTotal.arrived, false, true); return html + "</tbody></table></div>";
+}
+
+function trafficRow(name, leads, appt, arrived, isGroupTotal, isGrandTotal) {
+    var th = appState.settings.traffic || {}; 
+    var cvNazn = leads > 0 ? (appt / leads * 100) : 0;
+    var cvArr = appt > 0 ? (arrived / appt * 100) : 0; 
+    var clsNazn = "", clsArr = "";
+    
+    if (!isGroupTotal && !isGrandTotal) { 
+        if (leads > 0) clsNazn = trafficLightClass(cvNazn, th.cvNazn); else if (appt > 0) clsNazn = "bg-red"; 
+        if (appt > 0) clsArr = trafficLightClass(cvArr, th.cvArr); else if (arrived > 0) clsArr = "bg-red"; 
+    }
+    
+    var style = isGrandTotal ? "background:var(--theme-mid);font-weight:800;" : (isGroupTotal ? "font-weight:800;background:var(--theme-surface-tint);" : "font-weight:500;");
+    var fv = function(v){ return (v === 0 && !isGroupTotal && !isGrandTotal) ? "0" : v; }; 
+    var cvN = leads > 0 ? fmtPct(cvNazn) : "0,00%"; 
+    var cvA = appt > 0 ? fmtPct(cvArr) : "0,00%";
+    
+    return "<tr style='" + style + "'><td style='text-align:left'>" + name + "</td><td>" + fv(leads) + "</td><td>" + fv(appt) + "</td><td class='" + clsNazn + "'>" + cvN + "</td><td>" + fv(arrived) + "</td><td class='" + clsArr + "'>" + cvA + "</td></tr>";
+}
+
+function exportTrafficExcel() {
+    if (!trafficSortedTags.length) { showToast("Сначала рассчитайте трафик", 'err'); return; }
+    var groups = appState.teamGroups; var wb = XLSX.utils.book_new(); var aoa = [];
+    trafficSortedTags.forEach(function(tag) { 
+        aoa.push(["МЕТКА: " + tag]); aoa.push(["Менеджер","Взято в работу","Назначено","CV назн/обраб","Дошло","CV дошло/назн"]);
+        var tagTotal = { leads: 0, appt: 0, arrived: 0 }; var stats = trafficStatsStore[tag];
+        for (var g in groups) { 
+            var rows = [], gt = { leads: 0, appt: 0, arrived: 0 };
+            groups[g].forEach(function(name){ 
+                var d = stats[normalizeString(name)];
+                if (d && (d.leads > 0 || d.appt > 0 || d.arrived > 0)) { 
+                    gt.leads += d.leads; gt.appt += d.appt; gt.arrived += d.arrived;
+                    rows.push([d.name, d.leads || 0, d.appt || 0, d.leads > 0 ? fmtPct(d.appt / d.leads * 100) : "0,00%", d.arrived || 0, d.appt > 0 ? fmtPct(d.arrived / d.appt * 100) : "0,00%"]); 
+                } 
+            });
+            if (rows.length) { 
+                aoa.push([g, "", "", "", "", ""]); rows.forEach(function(rw){ aoa.push(rw); }); tagTotal.leads += gt.leads; tagTotal.appt += gt.appt; tagTotal.arrived += gt.arrived;
+                aoa.push(["ИТОГО " + g, gt.leads, gt.appt, gt.leads > 0 ? fmtPct(gt.appt / gt.leads * 100) : "0,00%", gt.arrived, gt.appt > 0 ? fmtPct(gt.arrived / gt.appt * 100) : "0,00%"]); aoa.push([]); 
+            } 
+        }
+        aoa.push(["ИТОГО ПО МЕТКЕ", tagTotal.leads, tagTotal.appt, tagTotal.leads > 0 ? fmtPct(tagTotal.appt / tagTotal.leads * 100) : "0,00%", tagTotal.arrived, tagTotal.appt > 0 ? fmtPct(tagTotal.arrived / tagTotal.appt * 100) : "0,00%"]); aoa.push([]); aoa.push([]); 
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Трафик_МПЛ"); XLSX.writeFile(wb, "Аналитика_Трафика_МПЛ_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+}
+
+function initTraffic() {
+    bindFileName("fileTraffic", "flBarTraffic", "flNameTraffic");
+    var btn = document.getElementById("trafficCalcBtn");
+    if(btn) btn.addEventListener("click", processTrafficFiles);
+    var exp = document.getElementById("exportTrafficBtn");
+    if(exp) exp.addEventListener("click", exportTrafficExcel);
+}
+
+/* ============================================================
+   ВКЛАДКА 6: НАСТРОЙКИ (СВЕТОФОР + КОМАНДЫ)
+   ============================================================ */
+function renderThresholds() {
+    var s = appState.settings; var box = document.getElementById("thresholdsContainer");
+    if (!s) { box.innerHTML = "<div class='empty-note'>Настройки не загружены.</div>"; return; }
+    var html = "";
+    THRESHOLD_META.forEach(function(m) { 
+        var t = s[m.group][m.key];
+        html += "<div class='threshold-card'><div class='t-title'>" + m.title + "</div><div class='threshold-row'><span class='dot dot-green'></span> Зелёный ≥ <input type='number' step='0.01' data-group='" + m.group + "' data-key='" + m.key + "' data-field='green' value='" + t.green + "'> %</div><div class='threshold-row'><span class='dot dot-yellow'></span> Жёлтый ≥ <input type='number' step='0.01' data-group='" + m.group + "' data-key='" + m.key + "' data-field='yellow' value='" + t.yellow + "'> %</div></div>"; 
+    });
+    box.innerHTML = html;
+}
+
+function saveThresholdsUI() {
+    document.querySelectorAll("#thresholdsContainer input").forEach(function(inp) {
+        var g = inp.dataset.group, k = inp.dataset.key, f = inp.dataset.field, val = parseFloat(inp.value); 
+        if (!isNaN(val)) appState.settings[g][k][f] = val; 
+    });
+    showToast("Пороги светофора применены");
+}
+
+function renderTeamsAdmin() {
+    var box = document.getElementById("teamsAdminContainer");
+    var teams = appState.teamGroups;
+    if (!teams || Object.keys(teams).length === 0) { box.innerHTML = "<div class='empty-note'>Команд пока нет — добавьте первую выше.</div>"; return; }
+    var html = ""; var teamIdx = 0;
+    for (var teamName in teams) {
+        var employees = teams[teamName];
+        var chips = employees.map(function(emp, empIdx) { return "<span class='emp-chip'>" + emp + "<button class='emp-del' title='Удалить' data-team='" + escAttr(teamName) + "' data-idx='" + empIdx + "'>✕</button></span>"; }).join("");
+        html += "<div class='team-admin-card'><div class='team-admin-head'><input type='text' class='text-input team-name-input' data-old='" + escAttr(teamName) + "' value='" + escAttr(teamName) + "'><span class='team-count'>👤 " + employees.length + "</span><button class='btn-danger team-del' data-team='" + escAttr(teamName) + "'>🗑 Удалить</button></div><div class='team-admin-body'><div class='emp-chips'>" + (chips || "<span class='empty-note'>Сотрудников нет</span>") + "</div><div class='add-emp-form'><input type='text' class='text-input emp-input' placeholder='ФИО нового сотрудника' data-team='" + escAttr(teamName) + "' id='empInput_" + teamIdx + "'><button class='btn-calc emp-add' data-team='" + escAttr(teamName) + "' data-input='empInput_" + teamIdx + "'>➕ Добавить</button></div></div></div>";
+        teamIdx++;
+    }
+    box.innerHTML = html;
+}
+
+function wireTeamsAdmin() {
+    var box = document.getElementById("teamsAdminContainer");
+    box.addEventListener("click", function(e) {
+        var btn = e.target.closest("button"); if (!btn) return;
+        if (btn.classList.contains("emp-del")) {
+            if (!confirm("Удалить сотрудника из команды?")) return;
+            var tn = btn.dataset.team, idx = parseInt(btn.dataset.idx, 10);
+            appState.teamGroups[tn].splice(idx, 1); renderTeamsAdmin();
+        } else if (btn.classList.contains("emp-add")) {
+            var tn2 = btn.dataset.team, input = document.getElementById(btn.dataset.input), nm = (input.value || "").trim(); 
+            if (!nm) { input.focus(); return; }
+            appState.teamGroups[tn2].push(nm); input.value = ""; renderTeamsAdmin();
+        } else if (btn.classList.contains("team-del")) {
+            var tn3 = btn.dataset.team;
+            if (!confirm("Удалить команду '" + tn3 + "' целиком?")) return;
+            delete appState.teamGroups[tn3]; renderTeamsAdmin();
+        }
+    });
+    box.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && e.target.classList.contains("emp-input")) {
+            var tn = e.target.dataset.team, all = box.querySelectorAll(".emp-add");
+            for (var i=0; i<all.length; i++) { if (all[i].dataset.team === tn) { all[i].click(); break; } }
+        }
+    });
+    box.addEventListener("change", function(e) {
+        if (e.target.classList.contains("team-name-input")) {
+            var oldName = e.target.dataset.old, newName = e.target.value.trim();
+            if (!newName || newName === oldName) { e.target.value = oldName; return; }
+            if (appState.teamGroups[newName] !== undefined) { showToast("Команда с таким именем уже есть", 'err'); e.target.value = oldName; return; }
+            appState.teamGroups[newName] = appState.teamGroups[oldName]; delete appState.teamGroups[oldName]; renderTeamsAdmin();
+        }
+    });
+}
+
+function addTeam() {
+    var nameInput = document.getElementById("newTeamName"), name = (nameInput.value || "").trim(); 
+    if (!name) { nameInput.focus(); return; }
+    if (appState.teamGroups[name] !== undefined) { showToast("Такая команда уже есть", 'err'); return; }
+    appState.teamGroups[name] = []; nameInput.value = ""; renderTeamsAdmin();
+}
+
+function initSettings() {
+    renderThresholds(); renderTeamsAdmin(); wireTeamsAdmin();
+    var st = document.getElementById("saveThresholdsBtn");
+    if(st) st.addEventListener("click", saveThresholdsUI);
+    var at = document.getElementById("addTeamBtn");
+    if(at) at.addEventListener("click", addTeam);
+    var nt = document.getElementById("newTeamName");
+    if(nt) nt.addEventListener("keydown", function(e){ if (e.key === "Enter") addTeam(); });
+}
+
+/* ============================================================
+   СКАЧИВАНИЕ ОБНОВЛЁННОГО HTML
+   ============================================================ */
+function downloadUpdatedHTML() {
+    try {
+        var rawHtml = window._htmlTemplate;
+        if (rawHtml.indexOf('</body>') === -1) rawHtml += '\n</body>';
+        if (rawHtml.indexOf('</html>') === -1) rawHtml += '\n</html>';
+
+        var jsonStr = JSON.stringify(appState).replace(/<\//g, '<\\/');
+        var re = new RegExp('(<scr' + 'ipt[^>]*id="saved-app-state"[^>]*>)[\\s\\S]*?(</scr' + 'ipt>)', 'i');
+        
+        if (re.test(rawHtml)) {
+            rawHtml = rawHtml.replace(re, '$1\n' + jsonStr + '\n$2');
+        } else {
+            rawHtml = rawHtml.replace(/<\/body>/i, '<scr' + 'ipt type="application/json" id="saved-app-state">\n' + jsonStr + '\n</scr' + 'ipt>\n</body>');
+        }
+        
+        var finalHtml = rawHtml;
+        if (finalHtml.indexOf('<!DOCTYPE html>') === -1 && finalHtml.indexOf('<!doctype html>') === -1) {
+            finalHtml = '<!DOCTYPE html>\n' + finalHtml;
+        }
+
+        var blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'Аналитика_ОП.html';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+        showToast('Файл скачан — откройте его, все настройки сохранены!');
+    } catch (err) {
+        console.error(err); showToast('Не удалось сохранить файл: ' + err.message, 'err');
+    }
+}
+
+/* ============================================================
+   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК + АНИМАЦИИ
+   ============================================================ */
+function switchTab(targetId) {
+    document.querySelectorAll(".tab-content").forEach(function(el){ 
+        el.classList.remove("active"); 
+        el.querySelectorAll(".fx-reveal").forEach(function(rev){
+            rev.classList.remove("in");
+            rev.style.transitionDelay = "0ms";
+        });
+    });
+    
+    document.querySelectorAll(".tab-btn").forEach(function(el){ 
+        el.classList.remove("active"); 
+    });
+    
+    var section = document.getElementById("tab-" + targetId); 
+    if (section) section.classList.add("active");
+    
+    var btn = document.querySelector(".tab-btn[data-tab='" + targetId + "']"); 
+    if (btn) btn.classList.add("active");
+    
+    document.body.classList.remove("theme-sun", "theme-sky", "theme-mint", "theme-lilac", "theme-slate");
+    var theme = TAB_THEMES[targetId] || ""; 
+    if (theme) document.body.classList.add(theme);
+    
+    if (targetId === "settings") { renderThresholds(); renderTeamsAdmin(); }
+    
+    setTimeout(function(){
+        if (section) {
+            var reveals = section.querySelectorAll(".fx-reveal");
+            reveals.forEach(function(el, index){ 
+                el.style.transitionDelay = (index * 30) + "ms"; 
+                el.classList.add("in"); 
+            });
+        }
+    }, 40);
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function wireTabs() { 
+    document.querySelectorAll(".tab-btn").forEach(function(btn){ 
+        btn.addEventListener("click", function(){ switchTab(btn.dataset.tab); }); 
+    }); 
+}
+
+/* Фоновые декорации */
+(function setupDecorations(){
+    function frame(){
+        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+        var decors = document.querySelectorAll(".bg-decor");
+        var factors = [-0.06, 0.05, -0.08, 0.07];
+        
+        for (var i=0; i<decors.length; i++) { 
+            decors[i].style.setProperty("--py", (y * (factors[i] || -0.05)).toFixed(1) + "px"); 
+        }
+        
+        var hero = document.querySelector(".tab-content.active .tab-hero");
+        if (hero){ 
+            var top = hero.getBoundingClientRect().top; 
+            if (top <= 66) hero.classList.add("is-stuck"); 
+            else hero.classList.remove("is-stuck"); 
+        }
+    }
+    var ticking = false;
+    window.addEventListener("scroll", function() { 
+        if (!ticking){ 
+            ticking = true; requestAnimationFrame(function(){ frame(); ticking = false; }); 
+        } 
+    }, { passive: true });
+})();
+
+// Обернули весь старт в try-catch, чтобы ни одна вкладка не сломала остальные
+document.addEventListener("DOMContentLoaded", function() {
+    try { wireTabs(); } catch(e){ console.error(e); }
+    try { initShifts(); } catch(e){ console.error(e); }
+    try { initDeals(); } catch(e){ console.error(e); }
+    try { initMarketing(); } catch(e){ console.error(e); }
+    try { initAttendance(); } catch(e){ console.error(e); }
+    try { initTraffic(); } catch(e){ console.error(e); }
+    try { initSettings(); } catch(e){ console.error(e); }
+    
+    var saveBtn = document.getElementById("saveHtmlBtn");
+    if(saveBtn) saveBtn.addEventListener("click", downloadUpdatedHTML);
+    
+    // Перехват системных ошибок
+    window.addEventListener('error', function(e) {
+        console.error("Sys Error: ", e);
+    });
+
+    switchTab("shifts");
+});
+</script>
+</body>
+</html>
